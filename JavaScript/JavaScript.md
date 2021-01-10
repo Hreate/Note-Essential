@@ -155,8 +155,8 @@ Object.create(prototype, [descriptors])
 **举例1：**（没有第二个参数时）
 
 ```javascript
-var obj1 = {username: 'smyhvae', age: 26};
-var obj2 = {address: 'shenzhen'};
+var obj1 = {username: 'smyhvae', age: 26}
+var obj2 = {address: 'shenzhen'}
 
 obj2 = Object.create(obj1);
 console.log(obj2);
@@ -169,8 +169,8 @@ obj1 成为了 obj2 的原型
 第二个参数可以给新的对象添加新的属性：
 
 ```javascript
-var obj1 = {username: 'smyhvae', age: 26};
-var obj2 = {address: 'shenzhen'};
+var obj1 = {username: 'smyhvae', age: 26}
+var obj2 = {address: 'shenzhen'}
 
 obj2 = Object.create(obj1, {
     sex: { // 给 obj2 添加新的属性 sex
@@ -220,7 +220,7 @@ Object.defineProperties(object, descriptors)
 var obj2 = {
     firstName: 'smyh',
     lastName: 'vae'
-};
+}
 Object.defineProperties(obj2, {
     fullName: {
         get: function () {
@@ -264,7 +264,7 @@ var obj = {
         this.firstName = names[0];
         this.lastName = names[1];
     }
-};
+}
 console.log(obj.fullName);
 obj.fullName = "curry stephen";
 console.log(obj.fullName);
@@ -531,7 +531,7 @@ var c = json.c;
 举例如下：
 
 ```javascript
-let { foo, bar } = { bar: '我是 bar 的值', foo: '我是 foo 的值' };
+let { foo, bar } = { bar: '我是 bar 的值', foo: '我是 foo 的值' }
 console.log(foo + '，' + bar); // 输出结果：我是 bar 的值，我是 foo 的值
 ```
 
@@ -543,7 +543,7 @@ console.log(foo + '，' + bar); // 输出结果：我是 bar 的值，我是 foo
 
 ```javascript
 let foo = 'haha';
-{ foo } = { foo: 'ymyhvae' };
+{ foo } = { foo: 'ymyhvae' }
 console.log(foo);
 ```
 
@@ -751,7 +751,7 @@ fn('vae');
 举例：
 
 ```javascript
-var arr = {1, 2, 3, 4};
+var arr = [1, 2, 3, 4];
 function fn(a, b, c, d) { // 当不确定方法的参数时，可以使用扩展运算符
     console.log(a);
     console.log(b);
@@ -766,7 +766,7 @@ fn(...arr);
 其他用法：
 
 ```javascript
-var arr1 = {1, 2, 3, 4, 5};
+var arr1 = [1, 2, 3, 4, 5];
 var arr2 = arr1; // 传递的是引用
 var arr3 = [...arr1]; // 深拷贝
 ```
@@ -825,6 +825,787 @@ ES6 的 Promise 是一个构造函数，用来生成 Promise 实例。
 let promise = new Promise((resolve, reject) => {
     // 进来之后，状态为 pending
     console.log('111'); // 这一行代码是同步的
+    // 开始执行异步操作（这里开始写异步的代码，比如 ajax 请求 or 开启定时器）
+    if (异步的 ajax 请求成功) {
+        console.log('333');
+        resolve(); // 如果请求成功了，请写 resolve()，此时，promise 的状态会被自动修改为 fullfilled
+    } else {
+        reject(); // 如果请求失败了，请写 reject()，此时，promise 的状态会被自动修改为 rejected
+    }
+});
+console.log('222');
+// 调用 promise 的 then()
+promise.then(() => {
+    // 如果 promise 的状态为 fullfilled，则执行这里的代码
+    console.log('成功了');
+},
+            () => {
+    // 如果 promise 的状态为 rejected，则执行这里的代码
+    console.log('失败了');
+}); 
+```
+
+代码解释：
+
+1. 当 new Promise() 执行之后，promise 对象的状态会被初始化为 pending，这个状态是初始化状态。new Promise() 这行代码，括号里的内容是同步执行的。括号里定义一个 function，function 有两个参数：resolve 和 reject。如下：
+   * 如果请求成功了，请写 resolve()，此时，promise 的状态会被自动修改为 fullfilled。
+   * 如果请求失败了，请写 reject()，此时，promise 的状态会被自动修改为 rejected。
+2. promise.then() 方法，括号里有两个参数，分别是两个函数 function1 和 function2：
+   * 如果 promise 的状态为 fullfilled，则执行 function1 的代码。
+   * 如果 promise 的状态为 rejected，则执行 function2 的代码。
+
+另外，resolve() 和 reject() 这两个方法，是可以给 promise.then() 传递参数的，如下：
+
+```javascript
+let promise = new Promise((resolve, reject) => {
+    // 进来之后，状态为 pending
+    console.log('111'); // 这一行代码是同步的
+    // 开始执行异步操作（这里开始写异步的代码，比如 ajax 请求 or 开启定时器）
+    if (异步的 ajax 请求成功) {
+        console.log('333');
+        resolve('haha'); // 如果请求成功了，请写 resolve()，此时，promise 的状态会被自动修改为 fullfilled
+    } else {
+        reject('555'); // 如果请求失败了，请写 reject()，此时，promise 的状态会被自动修改为 rejected
+    }
+});
+console.log('222');
+// 调用 promise 的 then()
+promise.then((successMsg) => {
+    // 如果 promise 的状态为 fullfilled，则执行这里的代码
+    console.log(successMsg, '成功了');
+},
+            (errorMsg) => {
+    // 如果 promise 的状态为 rejected，则执行这里的代码
+    console.log(errorMsg, '失败了');
+}); 
+```
+
+
+
+### 8.5 ajax 请求的举例（涉及到嵌套的回调）
+
+```javascript
+// 定义一个发送请求的方法
+function getNews(url) {
+    // 创建一个 promise 对象
+    let promise = new Promise((resolve, reject) => {
+        // 初始化 promise状态为 pending
+        // 启动了异步任务
+        let request = new XMLHttpRequest();
+        request.onreadystatechange = () => {
+            if (request.readyState === 4) {
+                if (request.status === 200) {
+                    let news = request.response;
+                    resolve(news);
+                } else {
+                    reject('请求失败了');
+                }
+            }
+        }
+        request.responseType = 'json'; // 设置返回的数据类型
+        request.open('GET', url); // 指定请求的方式，创建连接
+        request.send(); // 发送
+    });
+    return promise;
+}
+
+getNews('http://localhost:3000/news?id=2')
+	.then((news) => {
+    	console.log(news);
+    	document.write(JSON.stringify(news));
+    	console.log('http://localhost:3000' + news.commetUrl);
+    	return getNews('http://localhost:3000' + news.commetUrl);
+}, (error) => {
+    alert(error);
+})
+	.then((comments) => {
+    	console.log(comments);
+    	document.write('<br><br><br><br><br>' + JSON.stringify(comments));
+}, (error) => {
+    alert(error);
+});
+```
+
+记住，Promise 实例只能通过 resolve 或者 reject 函数来返回，并且使用 then() 或者 catch() 获取，不能在 new Promise 里面直接 return，这样是获取不到 Promise 的返回值。
+
+1. 我们也可以使用 Promise 直接 resolve(value)：
+
+   ```javascript
+   Promise.resolve(5).then(v => console.log(v)); // 5
+   ```
+
+2. 也可以使用 reject(value)：
+
+   ```javascript
+   Promise.reject(5).catch(v => console.log(v)); // 5
+   ```
+
+3. 执行器错误通过 catch 捕捉：
+
+   ```javascript
+   new Promise((resolve, reject) => {
+       if (true) {
+           throw new Error('error!');
+       }
+   }).catch(v => console.log(v.message)); // error!
+   ```
+
+
+
+### 8.6 Promise 链式调用
+
+这个例子中，使用了3个 then()，第一个 then() 返回 s * s，第二个 then() 捕获到上一个 then() 的返回值，最后一个 then() 直接输出 end。
+
+```javascript
+new Promise((resolve, reject) => {
+    try {
+        resolve(5);
+    } catch(e) {
+        reject('It was my false!');
+    }
+}).then(s => s * s).then(s => console.log(s)).then(() => console.log('end')); // 25 end
+```
+
+
+
+### 8.6 Promise 的其他方法
+
+在 Promise 构造函数中，除了 resolve() 和 reject() 之外，还有2个方法，Promise.all()、Promise.race()。
+
+**Promise.all()：**
+
+前面的例子都是只有一个 Promise，现在使用 all() 方法包装多个 Promise 实例。
+
+语法：参数只有一个，可迭代对象，可以是数组，或者 Symbol 类型等。
+
+```javascript
+Promise.all(iterable).then().catch();
+```
+
+示例：传入3个 Promise 实例
+
+```javascript
+Promise.all([
+    new Promise((resolve, reject) => {
+        resolve(1);
+    }),
+    new Promise((resolve, reject) => {
+        resolve(2);
+    }),
+    new Promise((resolve, reject) => {
+        resolve(3);
+    })
+]).then(arr => {
+    console.log(arr); // [1, 2, 3]
+});
+```
+
+**Promise.race()：**
+
+语法和 all() 一样，但是返回值有所不同，race() 根据传入的多个 Promise 实例，只要有一个实例 resolve() 或者 reject()，就立即返回该结果，其他实例不再执行。
+
+还是使用上面的例子，只是给每个 resolve() 加上一个定时器，最终结果返回的是3，因为第三个 Promise 最快执行。
+
+```javascript
+Promise.race([
+    new Promise((resolve, reject) => {
+        setTimeout(() => resolve(1), 1000);
+    }),
+    new Promese((resolve, reject) => {
+        setTimeout(() => resolve(2), 100);
+    }),
+    new Promise((resolve, reject) => {
+        setTimeout(() => resolve(3), 10);
+    })
+]).then(value => console.log(value)); // 3
+```
+
+
+
+### 8.7 Promise 派生
+
+派生的意思是定义一个新的 Promise 对象，继承 Promise 方法和属性。
+
+```javascript
+class MyPromise extends Promise {
+    // 重新封装 then()
+    success(resolve, reject) {
+        return this.then(resolve, reject);
+    }
+    // 重新封装 catch()
+    failer(reject) {
+        return this.catch(reject);
+    }
+}
+```
+
+使用以下这个派生类：
+
+```javascript
+new MyPromise((resolve, reject) => {
+    resolve(10);
+}).success(v => console,log(v)); // 10
+```
+
+
+
+
+
+## 9 async() （异步函数）
+
+### 9.1 概述
+
+async 函数实在 ES2017 引入的。
+
+概念：真正意义上去解决异步回调的问题，同步流程表达异步操作。
+
+本质：Generator 的语法糖
+
+语法：
+
+```javascript
+async () => {
+    await Promise对象;
+    await Promise对象;
+}
+```
+
+
+
+### 9.2 async、Promise对比（async 的特点）
+
+* 不需要像 Generator 去调用 next() 方法，遇到 await 等待当前的异步操作完成就往下执行。
+* async 返回的总是 Promise，可以用 then() 方法进行下一步操作。
+
+
+
+### 9.3 ES2017 封装好的 ajax——fetch()
+
+https://www.cnblogs.com/WindrunnerMax/p/13024711.html
+
+
+
+## 10 Symbol
+
+### 10.1 概述
+
+**背景：**ES5 中对象的属性名都是字符串，容易造成重名，污染环境。
+
+**概念：**ES6 引入了一种新的原始数据类型 Symbol，表示独一无二的值。它是 JavaScript 语言的第七种数据类型，前六种是：数值（number）、字符串（string）、布尔值（boolean）、对象（Object）、null、undefined。
+
+**特点：**
+
+* Symbol 属性对应的值是唯一的，解决命名冲突问题。
+* Symbol 值不能与其他数据进行计算，包括同字符串进行拼接。
+* for in、for of 遍历时不会遍历 Symbol 值。
+
+
+
+### 10.2 创建 Symbol 属性值
+
+Symbol 是函数，但并不是构造函数。创建一个 Symbol 数据类型：
+
+```javascript
+let mySymbol = Symbol();
+console.log(typeof(mySymbol)); // 打印结果：symbol
+console.log(mySymbol); // 打印结果：symbol()
+```
+
+
+
+### 10.3 将 Symbol 作为对象的属性值
+
+```javascript
+let mySymbol = Symbol();
+let obj = {
+    name: 'smyhvae',
+    age: 26
+}
+// obj.mySymbol = 'hello'; // 错误：不能用 . 这个符号给对象添加 Symbol 属性
+obj[mySymbol] = 'hello'; // 正确：通过属性选择器给对象添加 Symbol 属性
+console.log(obj);
+```
+
+
+
+### 10.4 创建 Symbol 属性值时，传参作为标识
+
+通过 Symbol() 创建两个值，这两个值是不一样的：
+
+```javascript
+let mySymbol1 = Symbol();
+let mySymbol2 = Symbol();
+console.log(mySymbol1); // Symbol()
+console.log(mySymbol2); // Symbol()
+console.log(mySymbol1 == mySymbol2); // false
+```
+
+既然 Symbol() 是函数，函数就可以传入参数，可以通过参数的不同来作为标识。例如：
+
+```javascript
+let mySymbol1 = Symbol('one');
+let mySymbol2 = Symbol('two');
+console.log(mySymbol1); // Symbol('one')
+console.log(mySymbol2); // Symbol('two')
+console.log(mySymbol1 == mySymbol2); // false
+```
+
+
+
+### 10.5 Symbol 检索
+
+在对象中获取字符串的 key 时，可以使用 Object.keys() 或者 Object.getOwnPropertyNames() 方法获取 key，但是使用 Symbol 做 key 时，就只能使用 ES6 新增的方法来获取了：
+
+```javascript
+let a = Symbol('a');
+let b = Symbol('b');
+
+let obj = {
+    [a]: '123',
+    [b]: 45
+}
+
+const symbolKeys = Object.getOwnPropertySymbols(obj);
+for (let value of symbolKeys) {
+    console.log(value);
+}
+```
+
+
+
+
+
+## 11 迭代器（Iterator）和 12 生成器（Generator）
+
+### 11.1 ES5 实现迭代器
+
+迭代器是一种特殊对象，每一个迭代器都有一个 next()，该方法返回一个对象，包括 value 和 done 属性。
+
+ES5 实现迭代器的代码如下：
+
+```javascript
+// 实现一个返回迭代器的函数，注意该函数不是迭代器，返回的结果才是迭代器
+function createIterator(items) {
+    var i = 0;
+    return {
+        next() {
+            var done = (i >= items.length); // 判断 i 是否小于遍历的对象长度
+            var value = !done ? items[i++] : undefined; // 如果 done 为 false，设置 value 为当前遍历的值
+            return {
+                done,
+                value
+            }
+        }
+    }
+}
+const a = createIterator([1, 2, 3]);
+// 该方法返回的最终是一个对象，包含 value、dong 属性
+console.log(a.next()); // {value: 1, done: false}
+console.log(a.next()); // {value: 2, done: false}
+console.log(a.next()); // {value: 3, done: false}
+console.log(a.next()); // {value: undefined, done: true}
+```
+
+
+
+## 
+
+**生成器是函数：用来返回迭代器。**
+
+这个概念有2个关键点，一个是函数，一个是返回迭代器。这个函数不是上面 ES5 中创建迭代器的函数，而是 ES6 中特有的，一个带有 `*` 的函数，同时也需要使用到 yield。
+
+```javascript
+// 生成器函数，ES6 内部实现了迭代器功能，要做的只是使用 yield 来迭代输出。
+function* createIterator() {
+    yield 1;
+    yield 2;
+    yield 3;
+}
+const a = createIterator();
+console.log(a.next()); // {value: 1, done: false}
+console.log(a.next()); // {value: 2, done: false}
+console.log(a.next()); // {value: 3, done: false}
+console.log(a.next()); // {value: undefined, done: true}
+```
+
+生成器的 yield 关键字有个神奇的功能，就是当执行一次 next()，那么只会执行一个 yield 后面的内容，然后语句终止运行。
+
+
+
+### 11.2 在 for 循环中使用迭代器
+
+即使是在 for 循环中使用 yield 关键字，也会暂停循环。
+
+```javascript
+function* createIterator(items) {
+    for (let i = 0; i < item.length; i++) {
+        yield items[i];
+    }
+}
+const a = createIterator([1, 2, 3]);
+console.log(a.next()); // {value: 1, done: false}
+```
+
+
+
+### 11.3 yield 使用限制
+
+yield 只能在生成器函数内部使用，如果在非生成器函数内部使用，则会报错
+
+
+
+### 11.4 生成器匿名函数表达式
+
+```javascript
+const createIterator = function* () {
+    yield 1;
+    yield 2;
+}
+const a = createIterator();
+console.log(a.next());
+```
+
+
+
+### 11.5 在对象内添加生成器函数
+
+```javascript
+const obj = {
+    a: 1,
+    * createIterator() {
+        yield this.a;
+    }
+}
+const a = obj.createIterator();
+console.log(a.next());
+```
+
+
+
+### 11.6 可迭代对象和 for of 循环
+
+凡是通过生成器生成的迭代器，都是可以迭代的对象（可迭代对象具有 Symbol.iterator 属性），也就是可以通过 for of 将 value 遍历出来：
+
+```javascript
+function* createIterator() {
+    yield 1;
+    yield 2;
+    yield 3;
+}
+const a = createIterator();
+for (let value of a) {
+    console.log(value);
+}
+// 1 2 3
+```
+
+
+
+### 11.7 创建可迭代对象
+
+在 ES6 中，数组、Set、Map、字符串都是可迭代对象。
+
+默认情况下定义的对象（object）是不可迭代的，但是可以通过 Symbol.iterator 创建迭代器。
+
+```javascript
+const obj = {
+    items: []
+}
+obj.items.push(1); // 这样子虽然向数组添加了新元素，但是 obj 不可迭代
+for (let x of obj) {
+    console.log(x); // _iterator[Symbol.iterator] is not a function
+}
+
+// 下面给 obj 添加一个生成器，使 obj 成为一个可以迭代的对象
+const obj = {
+    items: [],
+    * [Symbol.iterator]() {
+        for (let item of this.items) {
+            yield item;
+        }
+    }
+}
+obj.items.push(1);
+// 现在可以通过 for of 迭代 obj 了
+for (let x of obj) {
+    console.log(x)
+}
+```
+
+
+
+### 11.8 内建迭代器
+
+上面提到了，数组、Set、Map 都是可迭代对象，即它们内部实现了迭代器，并且提供了3中迭代器函数调用。
+
+1. **entries() 返回迭代器：**返回键值对
+
+   ```javascript
+   // 数组
+   const arr = ['a', 'b', 'c'];
+   for (let v of arr.entries()) {
+       console.log(v);
+   }
+   // [0, 'a'] [1, 'b'] [2, 'c']
+   
+   // Set https://www.cnblogs.com/wjcoding/p/11690886.html
+   const set = new Set(['a', 'b', 'c']);
+   for (let v of set.entries()) {
+       console.log(v);
+   }
+   // ['a', 'a'] ['b', 'b'] ['c', 'c']
+   
+   // Map
+   const map = new Map();
+   map.set('a', 'a');
+   map.set('b', 'b');
+   for (let v of map.entries()) {
+       console.log(v);
+   }
+   // ['a', 'a'] ['b', 'b']
+   ```
+
+2. **values() 返回迭代器：**返回键值对的 value
+
+   ```javascript
+   // 数组
+   const arr = ['a', 'b', 'c'];
+   for (let v of arr.values()) {
+       console.log(v);
+   }
+   // 'a' 'b' 'c'
+   
+   // Set
+   const set = new Set(['a', 'b', 'c']);
+   for (let v of set.values()) {
+       console.log(v);
+   }
+   // 'a' 'b' 'c'
+   
+   // Map
+   const map = new Map();
+   map.set('a', 'a');
+   map.set('b', 'b');
+   for (let v of map.values()) {
+       console.log(v);
+   }
+   // 'a' 'b'
+   ```
+
+3. **keys()：**返回键值对的 key
+
+   ```javascript
+   // 数组
+   const arr = ['a', 'b', 'c'];
+   for (let v of arr.keys()) {
+       console.log(v);
+   }
+   // 0 1 2
+   
+   // Set
+   const set = new Set(['a', 'b', 'c']);
+   for (let v of set.keys()) {
+       console.log(v);
+   }
+   // 'a' 'b' 'c'
+   
+   // Map
+   const map = new Map();
+   map.set('a', 'a');
+   map.set('b', 'b');
+   for (let v of map.keys()) {
+       console.log(v);
+   }
+   // 'a' 'b'
+   ```
+
+   虽然上面列举了3中内建的迭代器方法，但是不同集合的类型有自己默认的迭代器方法，在 for of 中，数组和 Set 的默认迭代器方法是 values()，Map 的默认迭代器方法是 entries()。
+
+
+
+### 11.9 for of 循环解构
+
+对象本身不支持迭代，但是可以添加一个生成器，返回一个 key、value 的迭代器，然后使用 for of 循环解构 key 和 value。
+
+```javascript
+const obj = {
+    a: 1,
+    b: 2,
+    * [Symbol.iterator]() {
+        for (let i in this) {
+            yield [i, this[i]];
+        }
+    }
+}
+for (let [key, value] of obj) {
+    console.log(key, value);
+}
+// 'a' 1 'b' 2
+```
+
+
+
+### 11.10 字符串迭代器
+
+```javascript
+const str = 'abc';
+for (let v of str) {
+    console.log(v);
+}
+// a b c
+```
+
+
+
+### 11.11 NodeList 迭代器
+
+dom 节点的迭代器
+
+```javascript
+const divs = document.getElementByTagName('div');
+for (let d of divs) {
+    console.log(d);
+}
+```
+
+
+
+### 11.12 展开运算符和迭代器
+
+```javascript
+function* test() {
+    yield 1;
+    yield 2;
+    yield 3;
+}
+let a = test();
+let b = [...a];
+console.log(b);
+```
+
+
+
+### 11.13 高级迭代器功能
+
+包括传参、抛出异常、生成器返回语句、委托生成器。
+
+#### 11.13.1 传参
+
+生成器里面有2个 yield，当执行第一个 next() 的时候，返回 value 为1，然后给第二个 next() 传入参数10，传递的参数会替代掉上一个 next() 的 yield 返回值
+
+```javascript
+function* createIterator() {
+    let first = yield 1;
+    yield first + 2;
+}
+let i = createIterator();
+console.log(i.next()); // {value: 1, done: false}
+console.log(i.next(10)); // {value: 12, done: false}
+```
+
+
+
+#### 11.13.2 在迭代器中抛出错误
+
+```javascript
+function* createIterator() {
+    let first = yield 1;
+    yield first + 2;
+}
+let i = createIterator();
+console.log(i.next()); // {value: 1, done: false}
+console.log(i.throw(new Error('error'))); // error
+console.log(i.next()); // 不再执行
+```
+
+
+
+#### 11.13.3 生成器返回语句
+
+生成器中添加 return 语句表示退出操作
+
+```javascript
+function* createIterator() {
+    let first = yield 1;
+    return;
+    yield first + 2;
+}
+let i = createIterator();
+console.log(i.next()); // {value: 1, done: false}
+console.log(i.next()); // {value: undefined, done: true}
+```
+
+
+
+#### 11.13.4 委托生成器
+
+生成器嵌套生成器
+
+```javascript
+function* aIterator() {
+    yield 1;
+}
+function* bIterator() {
+    yield 2;
+}
+function* cIterator() {
+    yield* aIterator();
+    yield* bIterator();
+}
+let i = cIterator();
+console.log(i.next()); // {value: 1, done: false}
+console.log(i.next()); // {value: 2, done: false}
+```
+
+
+
+### 11.14 异步任务执行器
+
+ES6 之前，使用异步的操作方式是调用函数并执行回调函数。
+
+书上的例子挺好的，在 nodejs 中，有一个读取文件的操作，使用的就是回调函数的方式。
+
+```javascript
+var fs = require('fs');
+fs.readFile('xx.json', function(err, contents) {
+    // 在回调函数中做一些事情
+});
+```
+
+那么任务执行器是什么呢？
+
+任务执行器是一个函数，用来循环执行生成器，因为生成器需要执行 N 次 next() 方法，才能运行完，所以需要一个自动任务执行器帮我们做这些事情，这就是任务执行器的作用。
+
+下面编写一个异步任务执行器：
+
+```javascript
+// taskDef 是一个生成器函数，run 是异步任务执行器
+function run(taskDef) {
+    let task = taskDef(); // 调用生成器
+    let result = task.next();
+    console.log(result); // 执行生成器的第一个 next()，返回 result
+    function step() {
+        if (!result.done) {
+            // 如果 done 为 false，则继续执行 next()，并且循环 step()，直到 done 为 true 退出
+            result = task.next();
+            console.log(result);
+            step();
+        }
+    }
+    step(); // 开始执行 step()
+}
+```
+
+测试一下：
+
+```javascript
+run(function* () {
+    yield 1;
+    yield 2;
+    yield 3;
+    yield 4;
+    yield 5;
+    console.log('over');
 });
 ```
 
