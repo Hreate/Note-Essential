@@ -1609,3 +1609,154 @@ run(function* () {
 });
 ```
 
+
+
+## 12 代理
+
+### 12.1 语法
+
+```javascript
+let p = new Proxy(target, handler);
+```
+
+target：一个目标对象（可以是任何类型的对象，包括数组、函数，甚至是另一个代理）用 Proxy 来包装。
+
+handler：一个对象，其属性是当执行一个操作时定义代理的行为的函数。
+
+
+
+### 12.2 代理的使用
+
+**基础demo：**
+
+```javascript
+const obj = {
+    a: 10
+}
+let handler = {
+    get(target, name) {
+        console.log('test', target, name);
+        return name in target ? target[name] : 37;
+    }
+}
+let p = new Proxy(obj, handler);
+console.log(p.a, p.b); // 10 37
+```
+
+这个例子的作用是拦截目标对象 obj，当执行 obj 的读写操作时，进入 handler 函数进行判断，如果读取的 key 不存在，则返回默认值。
+
+举例：js 渲染
+
+```javascript
+let DOM = new Proxy({}, {
+    get(target, attr) {
+        let domObj = document.createElement(attr);
+        return function (attrs, ...children) {
+            for (key in attrs) {
+                domObj.setAttribute(key, attrs[key]);
+            }
+            for (let i = 0; i < children.length; i++) {
+                if (typeof children[i] == 'string') {
+                    let textNode = document.createTextNode(children[i]);
+                    domObj.appendChild(textNode);
+                } else {
+                    domObj.appendChild(children[i]);
+                }
+            }
+            return domObj;
+        }
+    }
+});
+```
+
+
+
+## 13 模块
+
+### 13.1 模块的定义
+
+模块是自动运行在严格模式下并且没有办法退出运行的 JavaScript 代码。
+
+模块可以是数据、函数、类，需要指定导出的模块名，才能被其他模块访问。
+
+```javascript
+// 数据模块
+const obj = {a: 1}
+// 函数模块
+const sum = (a, b) => {
+    return a + b;
+}
+// 类模块
+class My extends React.Components {
+    
+}
+```
+
+
+
+### 13.2 模块的导出
+
+给数据、函数、类添加一个 export，就能导出模块。一个配置型的 JavaScript 文件中，可能会封装多种函数，然后给每个函数加上一个 export 关键字，就能在其他文件访问使用。
+
+```javascript
+// 数据模块
+export const obj = {a: 1}
+// 函数模块
+export const sum = (a, b) => {
+    return a + b;
+}
+// 类模块
+export class My extends React.Components {
+    
+}
+```
+
+
+
+### 13.3 模块的引用
+
+在其他的 js 文件中，可以引用上面定义的模块，使用 import 关键字，导入分2种情况，一种是导入指定的模块，另外一种是导入全部模块，
+
+1. 导入指定的模块
+
+   ```javascript
+   // 导入 obj 数据，My 类
+   import { obj, My } from './xx.js';
+   
+   // 使用
+   console.log(obj, My);
+   ```
+
+2. 导入全部模块
+
+   ```javascript
+   // 导入全部模块
+   import * as all form './xx.js';
+   
+   // 使用
+   console.log(all.obj, all.sum(1, 2), all.My);
+   ```
+
+
+
+### 13.4 默认模块的使用
+
+如果给模块加上 default 关键字，那么该 js 文件默认只导出该模块
+
+```javascript
+// 默认模块的定义
+function sum(a, b) {
+    return a + b;
+}
+export default sum;
+
+// 导入默认模块
+import sum from './xx.js';
+```
+
+
+
+### 13.5 模块的使用限制
+
+不能在语句和函数之内使用 export 关键字，只能在模块顶部使用。
+
