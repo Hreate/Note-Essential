@@ -532,7 +532,7 @@ var c = json.c;
 
 ```javascript
 let { foo, bar } = { bar: '我是 bar 的值', foo: '我是 foo 的值' }
-console.log(foo + '，' + bar); // 输出结果：我是 bar 的值，我是 foo 的值
+console.log(foo + '，' + bar); // 输出结果：我是 foo 的值，我是 bar 的值
 ```
 
 上方代码可以看出，对象的解构与数组的解构，有一个重要的区别：数组的元素是按次序排列的，变量的取值由它的位置决定；而对象的属性没有次序，是根据键来取值的。
@@ -1671,11 +1671,450 @@ let DOM = new Proxy({}, {
 
 
 
-## 13 模块
+## 13 Class 类
 
-### 13.1 模块的定义
+### 13.1 概述
+
+在 ES6 中，class（类）作为对象的模板被引入，可以通过 class  关键字定义类。
+
+class 的本质是 function。
+
+它可以看作一个语法糖，让对象原型的写法更加清晰、更像面向对象编程的语法。
+
+
+
+### 13.2 基础用法
+
+#### 13.2.1 类定义
+
+类表达式可以为匿名或命名。
+
+**匿名类：**
+
+```javascript
+let Example = class {
+    constructor(a) {
+        this.a = a;
+    }
+}
+```
+
+
+
+**命名类：**
+
+```javascript
+let Example = class Example {
+    constructor(a) {
+        this.a = a;
+    }
+}
+```
+
+
+
+#### 13.2.2 类声明
+
+```javascript
+class Example {
+    constructor(a) {
+        this.a = a;
+    }
+}
+```
+
+**注意要点：**不可重复声明
+
+```javascript
+class Example{}
+class Example{}
+// Uncaught SyntaxError: Identifier 'Example' has already been declared
+
+let Example = class {}
+class Example{}
+// Uncaught SyntaxError: Identifier 'Example' has already been declared
+```
+
+**注意要点：**
+
+类定义不会被提升，必须在访问前对类进行定义，否则就会报错。
+
+类中方法不需要 function 关键字。
+
+方法间不能加分号。
+
+
+
+### 13.2.3 类的主体
+
+> 属性
+
+##### prototype
+
+ES6 中，prototype 仍旧存在，虽然可以直接在类中定义方法，但是其实方法还是定义在 prototype 上的。
+
+覆盖方法
+
+```javascript
+Example.prototype = {
+    // methods
+}
+```
+
+添加方法
+
+```javascript
+Object.assign(Example.prototype, {
+    // methods
+})
+```
+
+
+
+**静态属性**
+
+class 本身的属性，即直接定义在类内部的属性（Class.propname），不需要实例化。ES6 中规定，Class 内部只有静态方法，没有静态属性。
+
+
+
+**公共属性**
+
+```javascript
+class Example {}
+Example.prototype.a = 2;
+```
+
+
+
+**实例属性**
+
+定义在实例对象（this）上的属性
+
+```javascript
+class Example {
+    a = 2;
+	constructor() {
+        console.log(this.a);
+    }
+}
+```
+
+
+
+**name 属性**
+
+返回跟在 class 后的类名（存在时）。
+
+```javascript
+let Example = class Exam {
+    constructor(a) {
+        this.a = a;
+    }
+}
+console.log(Example.name); // Exam
+```
+
+
+
+> 方法
+
+**constructor 方法**
+
+是类的默认方法，创建类的实例化对象时被调用。
+
+```javascript
+class Example {
+    constructor() {
+        console.log('我是 constructor');
+    }
+}
+new Example(); // 我是 constructor
+```
+
+
+
+**返回对象**
+
+```javascript
+class Test {
+    constructor () {
+        // 默认返回实例对象 this
+    }
+}
+console.log(new Test() instanceof Test); // true
+
+class Example {
+    constructor() {
+        // 指定返回对象
+        return new Test();
+    }
+}
+console.log(new Example() instanceof Example); // false
+```
+
+
+
+**静态方法**
+
+```javascript
+class Example {
+    static sum(a, b) {
+        console.log(a + b);
+    }
+}
+Example.sum(1, 2); // 3
+```
+
+
+
+**原型方法**
+
+```javascript
+class Example {
+    sum(a, b) {
+        console.log(a + b);
+    }
+}
+let exam = new Example();
+exam.sum(1, 2); // 3
+```
+
+
+
+**实例方法**
+
+```javascript
+class Example {
+    constructor() {
+        this.sum = (a, b) => {
+            console.log(a + b);
+        }
+    }
+}
+```
+
+
+
+### 13.3 类的实例化
+
+#### 13.3.1 new
+
+class 的实例化必须通过 new 关键字
+
+```javascript
+class Example {}
+
+let exam = new Example();
+```
+
+
+
+#### 13.3.2 实例化对象
+
+共享原型对象
+
+```javascript
+class Example {
+    constructor(a, b) {
+        this.a = a;
+        this.b = b;
+        console.log('Example');
+    }
+    sum() {
+        return this.a + this.b;
+    }
+}
+let exam1 = new Example(2, 1);
+let exam2 = new Example(3, 1);
+console.log(exam1.__proto__ == exam2.__proto__); // true
+
+exam1.__proto__.sub = function() {
+    return this.a - this.b;
+}
+console.log(exam1.sub()); // 1
+console.log(exam2.sub()); // 2
+```
+
+
+
+### 13.4 decorator 装饰器
+
+decorator 是一个函数，用来修改类的行为，在代码编译时产生作用。
+
+#### 13.4.1 类修饰
+
+一个参数 target，指向类本身
+
+```javascript
+function testable(target) {
+    target.isTestable = true;
+}
+@testable
+class Example {}
+Example.isTestable; // true
+```
+
+多个参数——嵌套实现
+
+```javascript
+function testable(isTestable) {
+    return function(target) {
+        target.isTestable = isTestable;
+    }
+}
+@testable(true)
+class Example {}
+Example.isTestable; // true
+```
+
+实例属性
+
+上面两个例子添加的是静态属性，若要添加实例属性，在类的 protype 上操作即可。
+
+
+
+#### 13.4.2 方法修饰
+
+3个参数：target（类的原型对象）、name（修饰的属性名）、descriptor（该属性的描述对象）
+
+```javascript
+class Example {
+    @readonly
+    sum(a, b) {
+        return a + b;
+    }
+}
+function readonly(target, name, descriptor) {
+    decriptor.writable = false;
+    return descriptor; // 必须返回
+}
+```
+
+
+
+#### 13.4.3 修饰器执行顺序
+
+由外向内进入，由内向外执行
+
+```javascript
+class Example {
+    @logMethod(1)
+    @logMethod(2)
+    sum(a, b) {
+        return a + b;
+    }
+}
+function logMethod(id) {
+    console.log('evaluated logMethod' + id);
+    return (target, name, descriptor) => console.log('excuted logMethod' + id);
+}
+// evaluated logMethod 1
+// evaluated logMethod 2
+// excuted logMethod 2
+// excuted logMethod 1
+```
+
+
+
+### 13.5 封装与继承
+
+#### 13.5.1 getter / setter
+
+**定义**
+
+```javascript
+class Example{
+    constructor(a, b) {
+        this.a = a; // 实例化时调用 set 方法
+        this.b = b;
+    }
+    get a(){
+        console.log('getter');
+        return this.a;
+    }
+    set a(a){
+        console.log('setter');
+        this.a = a; // 自身递归调用
+    }
+}
+let exam = new Example(1,2); // 不断输出 setter ，最终导致 RangeError
+class Example1{
+    constructor(a, b) {
+        this.a = a;
+        this.b = b;
+    }
+    get a(){
+        console.log('getter');
+        return this._a;
+    }
+    set a(a){
+        console.log('setter');
+        this._a = a;
+    }
+}
+let exam1 = new Example1(1,2); // 只输出 setter , 不会调用 getter 方法
+console.log(exam._a); // 1, 可以直接访问
+```
+
+**getter 不可单独出现**
+
+**getter 与 setter 必须同级出现**
+
+
+
+#### 13.5.2 extends
+
+通过 extends 实现类的继承
+
+```javascript
+class child extends Father { ... }
+```
+
+
+
+#### 13.5.3 super
+
+子类 constructor 方法中必须有 super，且必须出现在 this 之前
+
+调用父类构造函数，只能出现在子类的构造函数中
+
+```javascript
+class Father {
+    test() {
+        return 0;
+    }
+    static test1() {
+        return 1;
+    }
+}
+class Child extends Father {
+    constructor() {
+        super();
+    }
+}
+class Child2 extends Father {
+    constructor() {
+        super();
+        // 调用父类普通方法
+        console.log(super.test()); // 0
+    }
+    static test3() {
+        // 调用父类静态方法
+        return super.test1() + 2;
+    }
+}
+console.log(Child2.test3()); // 3
+```
+
+
+
+## 14 模块
+
+### 14.1 模块的定义
 
 模块是自动运行在严格模式下并且没有办法退出运行的 JavaScript 代码。
+
+一个模块就是一个独立的文件。
 
 模块可以是数据、函数、类，需要指定导出的模块名，才能被其他模块访问。
 
@@ -1694,7 +2133,7 @@ class My extends React.Components {
 
 
 
-### 13.2 模块的导出
+### 14.2 模块的导出
 
 给数据、函数、类添加一个 export，就能导出模块。一个配置型的 JavaScript 文件中，可能会封装多种函数，然后给每个函数加上一个 export 关键字，就能在其他文件访问使用。
 
@@ -1713,7 +2152,7 @@ export class My extends React.Components {
 
 
 
-### 13.3 模块的引用
+### 14.3 模块的引用
 
 在其他的 js 文件中，可以引用上面定义的模块，使用 import 关键字，导入分2种情况，一种是导入指定的模块，另外一种是导入全部模块，
 
@@ -1739,7 +2178,7 @@ export class My extends React.Components {
 
 
 
-### 13.4 默认模块的使用
+### 14.4 默认模块的使用
 
 如果给模块加上 default 关键字，那么该 js 文件默认只导出该模块
 
@@ -1756,7 +2195,87 @@ import sum from './xx.js';
 
 
 
-### 13.5 模块的使用限制
+### 14.5 模块的使用限制
 
 不能在语句和函数之内使用 export 关键字，只能在模块顶部使用。
+
+
+
+**在 react 中，模块顶部导入其他模块。**
+
+```javascript
+import react from 'react';
+```
+
+
+
+**在 vue 中，模块顶部导入其他模块。**
+
+```javascript
+<script>
+	import sum form './xx.js';
+</script>
+```
+
+
+
+### 14.6 修改模块导入和导出名
+
+有2中修改方式，一种是模块导出时修改，一种是模块导入时修改
+
+1. 导出时修改：
+
+   ```javascript
+   function sum(a, b) {
+       return a + b;
+   }
+   export { sum as add };
+   
+   import { add } from './xx.js';
+   add(1, 2);
+   ```
+
+2.  导入时修改
+
+   ```javascript
+   function sum(a, b) {
+       return a + b;
+   }
+   export { sum };
+   
+   import { sum as add } from './xx.js';
+   add(1, 2);
+   ```
+
+
+
+### 14.7 无绑定导入
+
+当你的模块没有可导出模块，全都是定义的全局变量的时候，可以使用无绑定导入。
+
+模块：
+
+```javascript
+let a = 1;
+const PI = 3.1415
+```
+
+无绑定导入：
+
+```javascript
+import './xx.js';
+console.log(a, PI);
+```
+
+
+
+### 14.8 浏览器加载模块
+
+使用 webpack 打包多个 js 文件，然后放到 HTML 中使用 script 加载时，如果加载顺序不对，就会出现找不到模块的错误，这是因为模块之间是有依赖关系的。
+
+module 类型默认使用 defer 属性
+
+```html
+<script type="module" src="./xx.js"></script>
+```
 
